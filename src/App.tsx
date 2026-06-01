@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Phone, MapPin, Clock, Utensils, Instagram, Facebook, Settings, ChevronLeft, ChevronRight, ArrowUp } from 'lucide-react';
+import { Phone, MapPin, Clock, Utensils, Instagram, Facebook, Settings, ChevronLeft, ChevronRight, ArrowUp, ShoppingCart, Plus, Minus, Trash2, X, MessageCircle } from 'lucide-react';
 import { MenuSection, menuData, MenuItem } from './data';
 import MenuImage from './components/MenuImage';
 import AdminPanel from './AdminPanel';
@@ -12,6 +12,49 @@ function App() {
   const [adminPassword, setAdminPassword] = useState('');
   const [adminError, setAdminError] = useState(false);
   const navRef = useRef<HTMLDivElement>(null);
+
+  type CartItem = {
+    name: string;
+    unitPrice: number;
+    quantity: number;
+  };
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+
+  const addToCart = (item: MenuItem) => {
+    const rawPrice = item.price || '0';
+    const unitPrice = parseFloat(rawPrice.replace(/[^0-9.]/g, '')) || 0;
+    
+    setCart(prev => {
+      const existing = prev.find(i => i.name === item.name);
+      if (existing) {
+        return prev.map(i => i.name === item.name ? { ...i, quantity: i.quantity + 1 } : i);
+      }
+      return [...prev, { name: item.name, unitPrice, quantity: 1 }];
+    });
+  };
+
+  const updateQuantity = (name: string, delta: number) => {
+    setCart(prev => {
+      const updated = prev.map(i => i.name === name ? { ...i, quantity: i.quantity + delta } : i);
+      return updated.filter(i => i.quantity > 0);
+    });
+  };
+
+  const cartTotal = cart.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+  const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  const handleCheckout = () => {
+    const phone = "+212669554798";
+    let message = `Hello Kawa Sushi,\n\nI would like to place an order:\n\n`;
+    cart.forEach(item => {
+      message += `* ${item.name} ×${item.quantity} = ${item.unitPrice * item.quantity} MAD\n`;
+    });
+    message += `\nTotal: ${cartTotal} MAD\n\n( لتأكيد طلبك، يرجى تزويدنا برقم هاتفك وعنوانك )\n\nThank you.`;
+    
+    const encodedMessage = encodeURIComponent(message);
+    window.open(`https://wa.me/${phone}?text=${encodedMessage}`, '_blank');
+  };
   
   // Persist menu changes to local storage
   const [activeMenuData, setActiveMenuData] = useState<MenuSection[]>(() => {
@@ -193,19 +236,7 @@ function App() {
               )}
               <div className="h-px w-24 bg-gradient-to-r from-transparent via-kawa-gold/50 to-transparent mt-6"></div>
               
-              {/* Category Images Rendered Above Grid if they exist */}
-              {category.categoryImages && category.categoryImages.length > 0 && (
-                <div className="flex gap-4 justify-center mt-6">
-                  {category.categoryImages.map((imgUrl, iIdx) => (
-                    <MenuImage 
-                      key={iIdx} 
-                      src={imgUrl} 
-                      alt={`${category.name} preview`} 
-                      className="w-24 h-24 md:w-32 md:h-32 rounded-full border border-kawa-gold/20 object-cover shadow-[0_10px_20px_rgba(0,0,0,0.3)]"
-                    />
-                  ))}
-                </div>
-              )}
+
             </div>
 
             {category.layout === 'columns' ? (
@@ -221,7 +252,17 @@ function App() {
                       {sub.items.filter(item => item.visible !== false).map((item, iIdx) => (
                         <div key={iIdx} className="flex justify-between items-center group">
                           <span className="text-lg font-medium text-white group-hover:text-kawa-gold transition-colors">{item.name}</span>
-                          {item.price && <span className="text-kawa-gold font-semibold bg-kawa-gold/10 px-2 py-1 rounded shrink-0">{item.price}</span>}
+                          <div className="flex items-center gap-3">
+                            {item.price && <span className="text-kawa-gold font-semibold bg-kawa-gold/10 px-2 py-1 rounded shrink-0">{item.price}</span>}
+                            {!isAdminMode && (
+                              <button 
+                                onClick={() => addToCart(item)}
+                                className="bg-neutral-800 hover:bg-kawa-gold text-white hover:text-black p-1.5 rounded-md transition-colors"
+                              >
+                                <Plus className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -264,6 +305,16 @@ function App() {
                           </p>
                         )}
                       </div>
+                      
+                      {!isAdminMode && (
+                        <button 
+                          onClick={() => addToCart(item)}
+                          className="mt-6 w-full flex items-center justify-center gap-2 bg-neutral-800/80 hover:bg-kawa-gold text-neutral-300 hover:text-black py-2.5 rounded-lg font-medium transition-all duration-300"
+                        >
+                          <ShoppingCart className="w-4 h-4" />
+                          Ajouter
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -320,15 +371,90 @@ function App() {
       </footer>
 
       {/* Floating Buttons */}
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+      <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-3 pointer-events-none">
         <button
           onClick={scrollToTop}
-          className={`bg-[#051a0c] border border-kawa-gold/30 hover:bg-kawa-gold text-kawa-gold hover:text-[#12331f] p-3 rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.5)] transition-all duration-500 scale-0 opacity-0 ${isScrolled ? 'scale-100 opacity-100' : ''}`}
+          className={`pointer-events-auto bg-[#051a0c] border border-kawa-gold/30 hover:bg-kawa-gold text-kawa-gold hover:text-[#12331f] p-3 rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.5)] transition-all duration-500 scale-0 opacity-0 ${isScrolled ? 'scale-100 opacity-100' : ''}`}
           title="Scroll to Top"
         >
           <ArrowUp className="w-5 h-5" />
         </button>
+
+        {!isAdminMode && cartItemCount > 0 && (
+          <button
+            onClick={() => setIsCartOpen(true)}
+            className="pointer-events-auto bg-kawa-gold hover:bg-yellow-500 text-black p-4 rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.5)] transition-all duration-300 relative group"
+            title="Mon Panier"
+          >
+            <div className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center border-2 border-[#051a0c] animate-bounce">
+              {cartItemCount}
+            </div>
+            <ShoppingCart className="w-6 h-6 group-hover:scale-110 transition-transform" />
+          </button>
+        )}
       </div>
+
+      {/* Cart Sidebar */}
+      {isCartOpen && (
+        <div className="fixed inset-0 z-[60] flex justify-end">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={() => setIsCartOpen(false)}></div>
+          <div className="bg-neutral-950 border-l border-kawa-gold/30 w-full max-w-md h-full flex flex-col relative shadow-2xl animate-in slide-in-from-right duration-300">
+            <div className="flex items-center justify-between p-6 border-b border-neutral-800 bg-neutral-900">
+              <h2 className="text-2xl font-bold tracking-wider text-kawa-gold flex items-center gap-3">
+                <ShoppingCart className="w-6 h-6" /> Mon Panier
+              </h2>
+              <button onClick={() => setIsCartOpen(false)} className="text-neutral-400 hover:text-white transition-colors bg-neutral-800 p-2 rounded-full">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              {cart.length === 0 ? (
+                <div className="text-center text-neutral-500 mt-10">Votre panier est vide.</div>
+              ) : (
+                cart.map((item, idx) => (
+                  <div key={idx} className="flex flex-col gap-2 bg-neutral-900/50 p-4 rounded-xl border border-neutral-800 hover:border-kawa-gold/30 transition-colors">
+                    <div className="flex justify-between items-start gap-3">
+                      <span className="font-semibold text-white leading-tight">{item.name}</span>
+                      <span className="text-kawa-gold font-bold shrink-0">{item.unitPrice * item.quantity} MAD</span>
+                    </div>
+                    <div className="flex justify-between items-center mt-2">
+                       <span className="text-sm text-neutral-400 font-mono">{item.unitPrice} MAD x {item.quantity}</span>
+                       <div className="flex items-center gap-2 bg-neutral-950 rounded-lg p-1 border border-neutral-800">
+                         <button onClick={() => updateQuantity(item.name, -1)} className="p-1.5 hover:text-kawa-gold hover:bg-neutral-800 rounded transition-colors text-neutral-300">
+                           {item.quantity === 1 ? <Trash2 className="w-4 h-4 text-red-500" /> : <Minus className="w-4 h-4" />}
+                         </button>
+                         <span className="font-bold w-6 text-center text-white">{item.quantity}</span>
+                         <button onClick={() => updateQuantity(item.name, 1)} className="p-1.5 hover:text-kawa-gold hover:bg-neutral-800 rounded transition-colors text-neutral-300">
+                           <Plus className="w-4 h-4" />
+                         </button>
+                       </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            
+            {cart.length > 0 && (
+              <div className="p-6 border-t border-neutral-800 bg-neutral-900 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+                <div className="flex justify-between items-center mb-6">
+                  <span className="text-lg font-bold text-neutral-400 uppercase tracking-wider">Total</span>
+                  <span className="text-3xl font-bold text-kawa-gold">{cartTotal} MAD</span>
+                </div>
+                <button 
+                  onClick={handleCheckout}
+                  className="w-full bg-kawa-gold text-[#12331f] font-extrabold text-lg py-4 rounded-xl hover:bg-yellow-500 transition-colors shadow-[0_0_20px_rgba(186,151,101,0.2)] flex items-center justify-center gap-3"
+                >
+                  <MessageCircle className="w-6 h-6" /> Commander via WhatsApp
+                </button>
+                <p className="text-center text-xs text-neutral-500 mt-4 leading-relaxed">
+                  Votre commande sera préparée et envoyée directement à notre WhatsApp.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Admin Login Modal */}
       {showAdminLogin && (
