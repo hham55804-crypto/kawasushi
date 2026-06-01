@@ -1,0 +1,6 @@
+{
+  "name": "Kawa Sushi & Wok",
+  "description": "Menu digital pour Kawa Sushi & Wok, restaurant asiatique.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,41 @@
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Inter:wght@300;400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-kawa-green: #0a2d18;
+  --color-kawa-green-dark: #051a0c;
+  --color-kawa-gold: #e2c161;
+  --color-kawa-cream: #f4efd5;
+
+  --font-cursive: "Dancing Script", cursive;
+  --font-sans: "Inter", sans-serif;
+}
+
+body {
+  background-color: var(--color-kawa-green);
+  color: var(--color-kawa-cream);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  background-image: radial-gradient(circle at 50% 0%, var(--color-kawa-green), var(--color-kawa-green-dark));
+  background-attachment: fixed;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar for webkit */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-kawa-green-dark);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-kawa-gold);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #f7d572;
+}
